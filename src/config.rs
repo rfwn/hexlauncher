@@ -3,9 +3,7 @@ use std::{path::PathBuf, fs};
 use serde::{Serialize, Deserialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Config {
-    version: String
-}
+pub struct Config {}
 
 impl Config {
     pub fn load() -> Self {
@@ -13,10 +11,13 @@ impl Config {
         let global_config_dir = dirs::config_dir().expect("problem determining global config directory");
 
         let config_dir = global_config_dir.join("nimb");
-
         if !config_dir.exists() {
             fs::create_dir(&config_dir).expect("problem creating config directory"); 
         }
+
+        Config::create_dir(&config_dir, "saves");
+        Config::create_dir(&config_dir, "instances");
+
 
         let config_path = config_dir.join("Config.toml");
 
@@ -37,8 +38,13 @@ impl Config {
     }
 
     pub fn default() -> Self {
-        Self {
-            version: "1.19.2".to_owned()
+        Self {}
+    }
+
+    pub fn create_dir(config_dir: &PathBuf, name: &str) {
+        let dir = config_dir.join(name);
+        if !dir.exists() {
+            fs::create_dir(&dir).expect(&format!("problem creating {} directory", name).as_str());
         }
     }
 }
