@@ -2,6 +2,8 @@ use std::path::PathBuf;
 
 use serde::{Deserialize, Serialize};
 
+use super::modification::Mod;
+
 #[derive(Debug, Serialize, Deserialize)]
 pub enum Loader {
     Fabric,
@@ -15,5 +17,6 @@ pub struct Save {
     version: String,
     options: String,
     instance_dir: PathBuf,
-    launch_cmd: String
+    launch_cmd: String,
+    modifications: Vec<Mod>
 }
