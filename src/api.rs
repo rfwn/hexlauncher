@@ -1,24 +1,15 @@
-use crate::AssetType;
+use nimb::{Asset, AssetType};
 use serde::Deserialize;
 
 #[derive(Debug, Deserialize)]
-pub struct Project {
-    slug: String,
-    title: String,
-    description: String,
-    versions: Vec<String>,
-    dependencies: Option<Vec<String>>
-}
-
-#[derive(Debug, Deserialize)]
 pub struct SearchResponse {
-    hits: Vec<Project>,
+    hits: Vec<Asset>,
     offset: i32,
     limit: u32,
     total_hits: u32
 }
 
-pub async fn find(asset_type: AssetType, version: String, name: String) -> Vec<Project> {
+pub async fn find(asset_type: AssetType, version: String, name: String) -> Vec<Asset> {
     let query = format!(
         "https://api.modrinth.com/v2/search?query={}?facets=[[versions:{}],[project_type:{}]]",
         name,

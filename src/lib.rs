@@ -1,4 +1,4 @@
-use std::{path::PathBuf, fs};
+use std::{path::PathBuf, fs, fmt};
 
 use serde::{Serialize, Deserialize};
 
@@ -45,6 +45,60 @@ impl Config {
         let dir = config_dir.join(name);
         if !dir.exists() {
             fs::create_dir(&dir).expect(&format!("problem creating {} directory", name).as_str());
+        }
+    }
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Mod {
+    name: String,
+    description: String,
+    source: String
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub enum Loader {
+    Fabric,
+    Quilt,
+    Forge
+}
+
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Save {
+    loader: Loader,
+    version: String,
+    options: String,
+    instance_dir: PathBuf,
+    launch_cmd: String,
+    modifications: Vec<Mod>
+}
+
+#[derive(Debug, Deserialize)]
+pub struct Asset {
+    slug: String,
+    title: String,
+    description: String,
+    versions: Vec<String>,
+    dependencies: Option<Vec<String>>
+}
+
+#[derive(clap::ValueEnum, Debug, Clone)]
+pub enum AssetType {
+    Mod,
+    Plugin,
+    DataPack,
+    Shader,
+    ResourcePack
+}
+
+impl fmt::Display for AssetType {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            AssetType::Mod => write!(f, "mod"),
+            AssetType::Plugin => write!(f, "plugin"),
+            AssetType::DataPack => write!(f, "datapack"),
+            AssetType::Shader => write!(f, "shader"),
+            AssetType::ResourcePack => write!(f, "resourcepack"),
         }
     }
 }
