@@ -1,5 +1,6 @@
 mod api;
 
+use dialoguer::{theme::ColorfulTheme, FuzzySelect};
 use nimb::{Config, AssetType};
 use clap::Parser;
 use api::find;
@@ -28,5 +29,12 @@ async fn main() {
 
     dbg!(&cli);
 
-    dbg!(find(cli.r#type, "1.19.2".to_owned(), cli.add).await);
+    let results: Vec<String> = find(cli.r#type, "1.19.2".to_owned(), cli.add).await.iter().map(|x| x.to_string()).collect();
+
+    let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
+        .with_prompt("pick the asset")
+        .default(0)
+        .items(&results[..])
+        .interact()
+        .unwrap();
 }

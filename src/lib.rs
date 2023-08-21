@@ -82,6 +82,12 @@ pub struct Asset {
     dependencies: Option<Vec<String>>
 }
 
+impl fmt::Display for Asset {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "'{}' ({})", self.title, self.slug)
+    }
+}
+
 #[derive(clap::ValueEnum, Debug, Clone)]
 pub enum AssetType {
     Mod,
