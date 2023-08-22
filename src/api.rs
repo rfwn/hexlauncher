@@ -10,11 +10,30 @@ pub struct SearchResponse {
 }
 
 pub async fn find(asset_type: AssetType, version: String, name: String) -> Vec<Asset> {
+    let project_type = match asset_type {
+        AssetType::Shader => "shader",
+        AssetType::ResourcePack => "resourcepack",
+        _ => "mod"
+    };
+
     let query = format!(
-        "https://api.modrinth.com/v2/search?query={}?facets=[[versions:{}],[project_type:{}]]",
+        "https://api.modrinth.com/v2/search?query={}&facets=[{}[\"versions:{}\"],[\"project_type:{}\"]]",
         name,
+        if project_type == "mod" {
+            format!(
+                "[\"categories:{}\"],",
+                match asset_type {
+                    AssetType::QuiltMod => "quilt",
+                    AssetType::FabricMod => "fabric",
+                    AssetType::ForgeMod => "forge",
+                    AssetType::DataPack => "datapack",
+                    AssetType::Plugin => "plugin",
+                    _ => ""
+                }
+            )
+        } else { "".to_string() },
         version,
-        asset_type.to_string()
+        project_type
     );
 
     let raw_body = reqwest::get(query).await.unwrap().text().await.unwrap();

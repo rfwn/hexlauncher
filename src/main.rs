@@ -14,7 +14,7 @@ struct Cli {
     #[arg(short('s'), long, value_name = "SAVE")]
     select: String,
 
-    #[arg(short('t'), long, default_value = "mod", value_name = "ASSET")]
+    #[arg(short('t'), long, default_value = "fabric-mod", value_name = "ASSET")]
     r#type: AssetType,
 
     #[arg(short('a'), long, value_name = "ASSET NAME", requires = "select")]
@@ -26,8 +26,6 @@ async fn main() {
     let config = Config::load();
 
     let cli = Cli::parse();
-
-    dbg!(&cli);
 
     let results: Vec<String> = find(cli.r#type, "1.19.2".to_owned(), cli.add).await.iter().map(|x| x.to_string()).collect();
 

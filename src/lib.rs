@@ -90,21 +90,11 @@ impl fmt::Display for Asset {
 
 #[derive(clap::ValueEnum, Debug, Clone)]
 pub enum AssetType {
-    Mod,
+    FabricMod,
+    ForgeMod,
+    QuiltMod,
     Plugin,
     DataPack,
     Shader,
     ResourcePack
-}
-
-impl fmt::Display for AssetType {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match self {
-            AssetType::Mod => write!(f, "mod"),
-            AssetType::Plugin => write!(f, "plugin"),
-            AssetType::DataPack => write!(f, "datapack"),
-            AssetType::Shader => write!(f, "shader"),
-            AssetType::ResourcePack => write!(f, "resourcepack"),
-        }
-    }
 }
