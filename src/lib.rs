@@ -1,6 +1,7 @@
 use std::{path::PathBuf, fs, fmt};
 
 use serde::{Serialize, Deserialize};
+use clap::ValueEnum;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct Config {}
@@ -27,6 +28,14 @@ impl Config {
         config
     }
 
+    pub fn new_instance() {
+        
+    }
+
+    fn default() -> Self {
+        Self {}
+    }
+
     fn read(path: &PathBuf) -> Self {
         let config_str = fs::read_to_string(path).expect("problem reading Config.toml");
         toml::from_str(&config_str).expect("problem parsing Config.toml")
@@ -37,11 +46,7 @@ impl Config {
         fs::write(path, config_str).expect("problem writing Config.toml");
     }
 
-    pub fn default() -> Self {
-        Self {}
-    }
-
-    pub fn create_dir(config_dir: &PathBuf, name: &str) {
+    fn create_dir(config_dir: &PathBuf, name: &str) {
         let dir = config_dir.join(name);
         if !dir.exists() {
             fs::create_dir(&dir).expect(&format!("problem creating {} directory", name).as_str());
@@ -49,52 +54,60 @@ impl Config {
     }
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Mod {
-    name: String,
-    description: String,
-    source: String
+#[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
+#[serde(rename_all = "snake_case")]
+pub enum ProjectType {
+    Mod,
+    ModPack,
+    ResourcePack,
+    Shader
 }
 
-#[derive(Debug, Serialize, Deserialize)]
-pub enum Loader {
-    Fabric,
-    Quilt,
-    Forge
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct Save {
-    loader: Loader,
-    version: String,
-    options: String,
-    instance_dir: PathBuf,
-    launch_cmd: String,
-    modifications: Vec<Mod>
-}
-
-#[derive(Debug, Deserialize)]
-pub struct Asset {
-    slug: String,
-    title: String,
-    description: String,
-    versions: Vec<String>,
-    dependencies: Option<Vec<String>>
-}
-
-impl fmt::Display for Asset {
+impl fmt::Display for ProjectType {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "'{}' ({})", self.title, self.slug)
+        write!(f, "{}", match &self {
+            ProjectType::Mod => "mod",
+            ProjectType::ModPack => "modpack",
+            ProjectType::ResourcePack => "resourcepack",
+            ProjectType::Shader => "shader"
+        })
     }
 }
 
-#[derive(clap::ValueEnum, Debug, Clone)]
-pub enum AssetType {
-    FabricMod,
-    ForgeMod,
-    QuiltMod,
+#[derive(Debug, Serialize, Deserialize)]
+pub struct Project {
+    pub slug: String,
+    pub title: String,
+    description: String,
+    project_type: ProjectType,
+    dependencies: Option<Vec<String>>
+}
+
+#[derive(ValueEnum, Debug, Clone, Serialize, Deserialize)]
+pub enum Loader {
+    Fabric,
+    Quilt,
+    Forge,
     Plugin,
-    DataPack,
-    Shader,
-    ResourcePack
+    DataPack
+}
+
+impl fmt::Display for Loader {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "{}", match &self {
+            Loader::Fabric => "fabric",
+            Loader::Quilt => "quilt",
+            Loader::Forge => "forge",
+            Loader::Plugin => "plugin",
+            Loader::DataPack => "datapack",
+        })
+    }
+}
+
+#[derive(Debug, Deserialize)]
+pub struct ModrinthSearchResponse {
+    pub hits: Vec<Project>,
+    offset: i32,
+    limit: u32,
+    total_hits: u32
 }

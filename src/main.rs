@@ -1,9 +1,9 @@
 mod api;
 
+use api::{ModrinthWrapper, ApiWrapper};
 use dialoguer::{theme::ColorfulTheme, FuzzySelect};
-use nimb::{Config, AssetType};
+use nimb::{Config, Loader, ProjectType};
 use clap::{Parser, Subcommand, Args};
-use api::find;
 
 #[derive(Debug, Parser, Clone)]
 #[command(name = "nimb")]
@@ -18,33 +18,45 @@ struct Cli {
 #[derive(Debug, Subcommand, Clone)]
 enum Commands {
     Add(AddArgs),
+    Create(CreateArgs)
 }
 
 #[derive(Debug, Args, Clone)]
 struct AddArgs {
     name: String,
     save: String,
-    r#type: Option<AssetType>
+    r#type: Option<Loader>
 }
+
+#[derive(Debug, Args, Clone)]
+struct CreateArgs {
+    name: String,
+    loader: Loader
+}
+
+
 
 #[tokio::main]
 async fn main() {
-    let config = Config::load();
-
     let cli = Cli::parse();
 
     match &cli.command {
         Commands::Add(args) => {
-            let raw_results = find(
-                args.r#type.clone().unwrap_or(AssetType::FabricMod),
-                "1.19.2".to_owned(),
-                args.name.clone()
-            );
+            let raw_results = ModrinthWrapper::search_projects(
+                args.name.clone(),
+                String::from("1.19.2"),
+                ProjectType::Mod,
+                Some(args.r#type.clone().unwrap_or(Loader::Fabric))
+            ).await;
 
+            if raw_results.len() == 0 {
+                eprintln!("no mods found");
+                return;
+            }
+                
             let string_results: Vec<String> = raw_results
-                .await
                 .iter()
-                .map(|x| x.to_string())
+                .map(|x| format!("'{}' {}", x.title, x.slug))
                 .collect();
 
              let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
@@ -53,6 +65,11 @@ async fn main() {
                 .items(&string_results[..])
                 .interact()
                 .unwrap();
+        },
+        Commands::Create(args) => {
+            let config = Config::load();
+
+
         }
     }
 }

@@ -1,44 +1,35 @@
-use nimb::{Asset, AssetType};
-use serde::Deserialize;
+use nimb::{Project, ProjectType, Loader, ModrinthSearchResponse};
+use async_trait::async_trait;
 
-#[derive(Debug, Deserialize)]
-pub struct SearchResponse {
-    hits: Vec<Asset>,
-    offset: i32,
-    limit: u32,
-    total_hits: u32
+pub struct ModrinthWrapper;
+
+#[async_trait]
+pub trait ApiWrapper {
+    async fn search_projects(query: String, version: String, project_type: ProjectType, loader: Option<Loader>) -> Vec<Project>;
 }
 
-pub async fn find(asset_type: AssetType, version: String, name: String) -> Vec<Asset> {
-    let project_type = match asset_type {
-        AssetType::Shader => "shader",
-        AssetType::ResourcePack => "resourcepack",
-        _ => "mod"
-    };
+#[async_trait]
+impl ApiWrapper for ModrinthWrapper {
+    async fn search_projects(query: String, version: String, project_type: ProjectType, loader: Option<Loader>) -> Vec<Project> {
+        let search_url = format!(
+            "https://api.modrinth.com/v2/search?query={}&facets=[{}[\"versions:{}\"],[\"project_type:{}\"]]",
+            query,
+            if project_type == ProjectType::Mod {
+                format!("[\"categories:{}\"],", loader.unwrap().to_string())
+            } else { String::new() },
+            version,
+            project_type
+        );
 
-    let query = format!(
-        "https://api.modrinth.com/v2/search?query={}&facets=[{}[\"versions:{}\"],[\"project_type:{}\"]]",
-        name,
-        if project_type == "mod" {
-            format!(
-                "[\"categories:{}\"],",
-                match asset_type {
-                    AssetType::QuiltMod => "quilt",
-                    AssetType::FabricMod => "fabric",
-                    AssetType::ForgeMod => "forge",
-                    AssetType::DataPack => "datapack",
-                    AssetType::Plugin => "plugin",
-                    _ => ""
-                }
-            )
-        } else { "".to_string() },
-        version,
-        project_type
-    );
+        let raw_body = reqwest::get(search_url)
+            .await
+            .unwrap()
+            .text()
+            .await
+            .unwrap();
 
-    let raw_body = reqwest::get(query).await.unwrap().text().await.unwrap();
+        let body: ModrinthSearchResponse = serde_json::from_str(&raw_body[..]).unwrap();
 
-    let body: SearchResponse = serde_json::from_str(&raw_body[..]).unwrap();
-
-    body.hits
+        body.hits
+    }
 }
