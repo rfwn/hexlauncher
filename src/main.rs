@@ -2,7 +2,7 @@ mod api;
 
 use dialoguer::{theme::ColorfulTheme, FuzzySelect};
 use nimb::{Config, AssetType};
-use clap::Parser;
+use clap::{Parser, Subcommand, Args};
 use api::find;
 
 #[derive(Debug, Parser, Clone)]
@@ -11,14 +11,20 @@ use api::find;
 #[command(version = "0.1.0")]
 #[command(about = "a cli minecraft modpack manager & launcher")]
 struct Cli {
-    #[arg(short('s'), long, value_name = "SAVE")]
-    select: String,
+    #[command(subcommand)]
+    command: Commands,
+}
 
-    #[arg(short('t'), long, default_value = "fabric-mod", value_name = "ASSET")]
-    r#type: AssetType,
+#[derive(Debug, Subcommand, Clone)]
+enum Commands {
+    Add(AddArgs),
+}
 
-    #[arg(short('a'), long, value_name = "ASSET NAME", requires = "select")]
-    add: String
+#[derive(Debug, Args, Clone)]
+struct AddArgs {
+    name: String,
+    save: String,
+    r#type: Option<AssetType>
 }
 
 #[tokio::main]
@@ -27,12 +33,26 @@ async fn main() {
 
     let cli = Cli::parse();
 
-    let results: Vec<String> = find(cli.r#type, "1.19.2".to_owned(), cli.add).await.iter().map(|x| x.to_string()).collect();
+    match &cli.command {
+        Commands::Add(args) => {
+            let raw_results = find(
+                args.r#type.clone().unwrap_or(AssetType::FabricMod),
+                "1.19.2".to_owned(),
+                args.name.clone()
+            );
 
-    let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
-        .with_prompt("pick the asset")
-        .default(0)
-        .items(&results[..])
-        .interact()
-        .unwrap();
+            let string_results: Vec<String> = raw_results
+                .await
+                .iter()
+                .map(|x| x.to_string())
+                .collect();
+
+             let selection = FuzzySelect::with_theme(&ColorfulTheme::default())
+                .with_prompt("pick the asset")
+                .default(0)
+                .items(&string_results[..])
+                .interact()
+                .unwrap();
+        }
+    }
 }
