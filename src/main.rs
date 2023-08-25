@@ -2,7 +2,7 @@ mod api;
 
 use api::{ModrinthWrapper, ApiWrapper};
 use dialoguer::{theme::ColorfulTheme, FuzzySelect};
-use nimb::{Config, Loader, ProjectType};
+use nimb::{Loader, ProjectType, launcher::config::Config};
 use clap::{Parser, Subcommand, Args};
 
 #[derive(Debug, Parser, Clone)]
@@ -56,7 +56,7 @@ async fn main() {
                 
             let string_results: Vec<String> = raw_results
                 .iter()
-                .map(|x| format!("'{}' {}", x.title, x.slug))
+                .map(|x| format!("'{}' ({})", x.title, x.slug))
                 .collect();
 
              let selection = FuzzySelect::with_theme(&ColorfulTheme::default())

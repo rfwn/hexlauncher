@@ -1,7 +1,13 @@
-use nimb::{Project, ProjectType, Loader, ModrinthSearchResponse};
+use nimb::{Project, ProjectType, Loader};
 use async_trait::async_trait;
+use serde::Deserialize;
 
 pub struct ModrinthWrapper;
+
+#[derive(Debug, Deserialize)]
+pub struct ModrinthSearchResponse {
+    pub hits: Vec<Project>
+}
 
 #[async_trait]
 pub trait ApiWrapper {
