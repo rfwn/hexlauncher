@@ -1,31 +1,38 @@
 use std::{fs, path::PathBuf};
 
-use serde::{Serialize, Deserialize};
-
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize)]
-pub struct Config {}
+pub struct Config {
+    pub directory: PathBuf,
+}
 
 impl Config {
     pub fn load() -> Self {
         let mut config = Config::default();
-        let global_config_dir = dirs::config_dir().expect("problem determining global config directory");
 
-        let config_dir = global_config_dir.join("nimb");
-        if !config_dir.exists() {
-            fs::create_dir(&config_dir).expect("problem creating config directory"); 
+        if !config.directory.exists() {
+            fs::create_dir(&config.directory).expect("problem creating config directory");
         }
 
-        let config_path = config_dir.join("Config.toml");
+        let config_path = &config.directory.join("Config.toml");
 
-        if config_path.exists() { config = Config::read(&config_path); }
-        else { Config::write(&config_path, &config) }
+        if config_path.exists() {
+            config = Config::read(&config_path);
+        } else {
+            Config::write(&config_path, &config)
+        }
 
         config
     }
 
     fn default() -> Self {
-        Self {}
+        let global_config_dir =
+            dirs::config_dir().expect("problem determining global config directory");
+
+        Self {
+            directory: global_config_dir.join("nimb"),
+        }
     }
 
     fn read(path: &PathBuf) -> Self {
